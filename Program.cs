@@ -1,50 +1,75 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.ComponentModel;
 
-Console.WriteLine("nishi1000!");
-
-int a=42;
-Console.WriteLine(a);
-
-bool i=true;
-Console.WriteLine(i);
-
-double b=3.14;
-Console.WriteLine(b);
-
-string c="こんにちは";
-Console.WriteLine(c);
-
-decimal d=0.1m;
-Console.WriteLine(d);
-
-var e = "すとりんぐ";
-Console.WriteLine(e);
 
 string name = "Nishi";
 Console.WriteLine($"名前は{name}です");
 
-Console.WriteLine($"あなたの名前を入力してください。");
-var f = Console.ReadLine();
+Console.WriteLine($"あなたの年齢を入力してください。");
+var a = Console.ReadLine();
 
-Console.WriteLine($"こんにちは、{f}！");
-
-Console.WriteLine($"数字を2つ入力してください。");
-
-int g;
-int h;
-Console.Write("ひとつめ:");
-if(int.TryParse(Console.ReadLine(), out g))
+if (!int.TryParse(a, out int age))
 {
-    Console.Write("ふたつめ:");
-    if(int.TryParse(Console.ReadLine(), out h))
-    {
-        Console.WriteLine(g+h);
-    }
-    else
-    {
-        Console.WriteLine("数字を入力してください。");
-    }
-}else{
-    Console.WriteLine("数字を入力してください。");
-};
+    Console.WriteLine("入力が無効です。");
+    return;
+}else if (age < 18)
+{
+    Console.WriteLine("未成年です。");
+}else if (age >= 18 && age < 65)
+{
+    Console.WriteLine("成人です。");
+}else
+{
+    Console.WriteLine("シニアです。");
+}
+
+Console.WriteLine($"曜日を入力してください。");
+var b = Console.ReadLine();
+
+switch (b)
+{
+    case "月":
+    case "火":
+    case "水":
+    case "木":
+    case "金":
+        Console.WriteLine("平日です。");
+        break;
+    case "土":
+    case "日":
+        Console.WriteLine("休日です。");
+        break;
+    case "水曜日":
+        Console.WriteLine("今日は水曜日です。");
+        break;
+    default:
+        Console.WriteLine("正しい曜日を入力してください。");
+        break;
+}
+
+
+Console.WriteLine($"点数を入力してください。");
+var c = Console.ReadLine();
+
+if (!int.TryParse(c, out int score))
+{
+    Console.WriteLine("入力が無効です。");
+    return;
+}else if (score >= 90)
+{
+    Console.WriteLine("評価はAです。");
+}else if (score >= 80)
+{
+    Console.WriteLine("評価はBです。"); 
+}else if (score >= 70)
+{
+    Console.WriteLine("評価はCです。");
+}else if (score >= 60)
+{
+    Console.WriteLine("評価はDです。"); 
+
+}else
+{
+    Console.WriteLine("評価はFです。");
+}
+
