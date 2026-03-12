@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C# 学習進捗</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --accent: #6c8ef5;
+      --accent-glow: rgba(108,142,245,0.15);
+      --green: #3ecf8e;
+      --green-glow: rgba(62,207,142,0.12);
+      --yellow: #f5a623;
+      --text: #e2e8f0;
+      --text-muted: #6b7a99;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', 'Yu Gothic UI', sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 60px;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+    header p {
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Total progress */
+    .total-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin: 0 auto 32px;
+      max-width: 760px;
+    }
+    .total-card .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .total-card .rail-title { font-size: 1rem; font-weight: 600; }
+    .total-card .count { font-size: 0.9rem; color: var(--text-muted); }
+    .bar-outer {
+      background: var(--surface2);
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .bar-inner {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      transition: width 0.4s ease;
+    }
+
+    /* Railway cards */
+    .railways {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .railway {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .railway-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+      gap: 12px;
+    }
+    .railway-header:hover { background: var(--accent-glow); }
+    .railway-header.done { background: var(--green-glow); }
+    .railway-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .railway-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .railway-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .railway-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .railway-mini-bar {
+      width: 80px;
+      background: var(--surface2);
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .railway-mini-bar .bar-inner { height: 100%; }
+    .railway-count {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      min-width: 40px;
+      text-align: right;
+    }
+    .chevron {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      transition: transform 0.25s;
+    }
+    .railway.open .chevron { transform: rotate(180deg); }
+    .railway-body {
+      display: none;
+      padding: 4px 16px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .railway.open .railway-body { display: block; }
+
+    /* Station rows */
+    .station-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .station-row:hover { background: var(--surface2); }
+    .station-row.done .station-name { color: var(--green); text-decoration: line-through; opacity: 0.7; }
+    .station-row.done .station-num { background: var(--green); color: #fff; }
+    .station-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 0.72rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: var(--text-muted);
+      transition: background 0.2s;
+    }
+    .station-name {
+      font-size: 0.88rem;
+      flex: 1;
+      transition: color 0.2s;
+    }
+    .station-check {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .station-check:checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .station-check:checked::after {
+      content: '✓';
+      position: absolute;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    /* Reset button */
+    .reset-btn {
+      display: block;
+      margin: 32px auto 0;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .reset-btn:hover { border-color: #e55; color: #e55; }
+
+    @media (max-width: 500px) {
+      .railway-mini-bar { width: 50px; }
+      .railway-name { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>C# 学習進捗トラッカー</h1>
+  <p>クリアした Station にチェックを入れてください。ブラウザが閉じても保存されます。</p>
+</header>
+
+<div class="total-card">
+  <div class="label-row">
+    <span class="rail-title">📊 全体進捗</span>
+    <span class="count" id="total-count">0 / 43 Station</span>
+  </div>
+  <div class="bar-outer">
+    <div class="bar-inner" id="total-bar" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="railways" id="railways"></div>
+
+<button class="reset-btn" onclick="resetAll()">🗑 進捗をリセット</button>
+
+<script>
+const RAILWAYS = [
+  {
+    id: 'intro',
+    badge: 'C# 入門編',
+    name: 'C# 入門編',
+    stations: [
+      '環境構築と Hello World',
+      '変数とデータ型',
+      '条件分岐',
+      'ループ（繰り返し処理）',
+      'メソッド（関数）',
+      'クラスとオブジェクト',
+      '配列とリスト',
+      '例外処理',
+      'ミニ家計簿アプリの作成（総合演習）'
+    ]
+  },
+  {
+    id: 'fundamentals',
+    badge: 'C# 基礎編',
+    name: 'C# 基礎編',
+    stations: [
+      '継承とポリモーフィズム',
+      'インターフェースと抽象クラス',
+      'ジェネリクス',
+      'LINQ',
+      '非同期処理（async / await）',
+      'ファイル I/O と JSON 操作',
+      'Null 安全とモダン C# の機能',
+      'タスク管理アプリの作成（総合演習）'
+    ]
+  },
+  {
+    id: 'aspnet_intro',
+    badge: 'ASP.NET Core 入門',
+    name: 'ASP.NET Core Web API 入門編',
+    stations: [
+      '最初の Web API プロジェクト',
+      'コントローラーとルーティング',
+      'モデルと DTO',
+      'Entity Framework Core（DB 接続）',
+      'バリデーションとエラーハンドリング',
+      '依存性注入（DI）',
+      '投稿機能とリレーション',
+      '掲示板 API の完成（総合演習）'
+    ]
+  },
+  {
+    id: 'aspnet_practice',
+    badge: 'ASP.NET Core 実践',
+    name: 'ASP.NET Core Web API 実践編',
+    stations: [
+      '認証・認可（JWT）',
+      'ミドルウェア',
+      'ロギング',
+      '単体テスト（xUnit）',
+      '結合テスト',
+      'CORS とフロントエンド連携',
+      'デプロイ'
+    ]
+  },
+  {
+    id: 'wpf',
+    badge: 'WPF',
+    name: 'WPF デスクトップアプリ入門編',
+    stations: [
+      'WPF プロジェクト作成と最初のウィンドウ',
+      'XAML レイアウトとコントロール',
+      'データバインディング',
+      'MVVM パターン',
+      'スタイルとテンプレート',
+      'TODO デスクトップアプリの完成（総合演習）'
+    ]
+  },
+  {
+    id: 'mvc',
+    badge: 'MVC 理解・モダン化',
+    name: 'MVC 理解・モダン化編',
+    stations: [
+      'MVC パターンを理解する',
+      'ASP.NET Core MVC プロジェクトを作る',
+      'MVC での CRUD 実装',
+      'レガシー ASP.NET MVC のコードを読む',
+      'モダン化の方向性を理解する'
+    ]
+  }
+];
+
+const TOTAL = RAILWAYS.reduce((s, r) => s + r.stations.length, 0);
+
+function getState() {
+  try { return JSON.parse(localStorage.getItem('csharp_progress') || '{}'); }
+  catch { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem('csharp_progress', JSON.stringify(state));
+}
+
+function updateTotals(state) {
+  const done = Object.values(state).filter(Boolean).length;
+  document.getElementById('total-count').textContent = `${done} / ${TOTAL} Station`;
+  document.getElementById('total-bar').style.width = `${(done / TOTAL * 100).toFixed(1)}%`;
+}
+
+function updateRailway(railwayId, state) {
+  const railway = RAILWAYS.find(r => r.id === railwayId);
+  const total = railway.stations.length;
+  const done = railway.stations.filter((_, i) => state[`${railwayId}_${i}`]).length;
+
+  const bar = document.getElementById(`bar-${railwayId}`);
+  const cnt = document.getElementById(`cnt-${railwayId}`);
+  const header = document.getElementById(`hdr-${railwayId}`);
+
+  bar.style.width = `${(done / total * 100).toFixed(1)}%`;
+  cnt.textContent = `${done}/${total}`;
+  header.classList.toggle('done', done === total);
+
+  // Update station rows
+  railway.stations.forEach((_, i) => {
+    const row = document.getElementById(`row-${railwayId}_${i}`);
+    const num = document.getElementById(`num-${railwayId}_${i}`);
+    const checked = !!state[`${railwayId}_${i}`];
+    row.classList.toggle('done', checked);
+    num.textContent = checked ? '✓' : i + 1;
+  });
+}
+
+function toggle(railwayId, stationIdx) {
+  const state = getState();
+  const key = `${railwayId}_${stationIdx}`;
+  state[key] = !state[key];
+  saveState(state);
+  updateRailway(railwayId, state);
+  updateTotals(state);
+}
+
+function resetAll() {
+  if (!confirm('進捗をすべてリセットしますか？')) return;
+  localStorage.removeItem('csharp_progress');
+  const state = {};
+  RAILWAYS.forEach(r => updateRailway(r.id, state));
+  updateTotals(state);
+}
+
+function build() {
+  const container = document.getElementById('railways');
+  const state = getState();
+
+  RAILWAYS.forEach(railway => {
+    const el = document.createElement('div');
+    el.className = 'railway';
+    el.id = `railway-${railway.id}`;
+
+    const stationsHtml = railway.stations.map((name, i) => {
+      const key = `${railway.id}_${i}`;
+      const checked = !!state[key];
+      return `
+        <div class="station-row${checked ? ' done' : ''}" id="row-${key}"
+             onclick="toggle('${railway.id}', ${i})">
+          <div class="station-num" id="num-${key}">${checked ? '✓' : i + 1}</div>
+          <span class="station-name">Station ${i + 1}: ${name}</span>
+          <input type="checkbox" class="station-check" ${checked ? 'checked' : ''}
+                 onclick="event.preventDefault()">
+        </div>`;
+    }).join('');
+
+    const total = railway.stations.length;
+    const done = railway.stations.filter((_, i) => state[`${railway.id}_${i}`]).length;
+    const pct = (done / total * 100).toFixed(1);
+
+    el.innerHTML = `
+      <div class="railway-header${done === total ? ' done' : ''}" id="hdr-${railway.id}"
+           onclick="this.closest('.railway').classList.toggle('open')">
+        <div class="railway-left">
+          <span class="railway-badge">${railway.badge}</span>
+          <span class="railway-name">${railway.name}</span>
+        </div>
+        <div class="railway-right">
+          <div class="railway-mini-bar">
+            <div class="bar-inner" id="bar-${railway.id}" style="width:${pct}%;
+              background:${done === total ? 'var(--green)' : 'linear-gradient(90deg, var(--accent), var(--green))'}"></div>
+          </div>
+          <span class="railway-count" id="cnt-${railway.id}">${done}/${total}</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="railway-body">${stationsHtml}</div>`;
+
+    container.appendChild(el);
+  });
+
+  updateTotals(state);
+
+  // 進行中のRailwayを自動展開
+  const state2 = getState();
+  RAILWAYS.forEach(railway => {
+    const total = railway.stations.length;
+    const done = railway.stations.filter((_, i) => state2[`${railway.id}_${i}`]).length;
+    if (done > 0 && done < total) {
+      document.getElementById(`railway-${railway.id}`).classList.add('open');
+    }
+  });
+  // 全部未着手なら最初を開く
+  const anyDone = Object.values(state2).some(Boolean);
+  if (!anyDone) {
+    document.getElementById(`railway-${RAILWAYS[0].id}`).classList.add('open');
+  }
+}
+
+build();
+</script>
+</body>
+</html>
